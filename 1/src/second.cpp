@@ -13,7 +13,7 @@
 
 #include "util.hpp"
 
-// Use "X" to align so that idx % 10 equals the value
+// Lookup table where idx % 10 == value
 std::vector<std::string> const TEXT_DIGITS({"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"});
 
 unsigned find_first_digit(std::string const &line)
@@ -41,7 +41,8 @@ unsigned find_last_digit(std::string const &line)
     for (unsigned i = 0; i != TEXT_DIGITS.size(); ++i)
     {
         auto val = line.rfind(TEXT_DIGITS[i]);
-        if (val != std::string::npos && val > maxIdx)
+        // Use >= to account if val == 0
+        if (val != std::string::npos && val >= maxIdx)
         {
             maxIdx = val;
             maxDigit = i % 10;
@@ -55,7 +56,6 @@ unsigned parse_line(std::string const &line)
 {
     auto first = find_first_digit(line);
     auto last = find_last_digit(line);
-    std::cout << (first * 10 + last) << '\n';
     return first * 10 + last;
 }
 
