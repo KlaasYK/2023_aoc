@@ -3,6 +3,8 @@
 
 cmake_minimum_required (VERSION 3.16)
 
-project(aoc23)
+project(AOC_23)
+
+add_subdirectory(lib)
 
 add_subdirectory(1)
