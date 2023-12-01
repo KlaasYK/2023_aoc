@@ -11,26 +11,7 @@
 #include <iterator>
 #include <numeric>
 
-namespace util
-{
-    class Line : public std::string
-    {
-        friend std::istream &operator>>(std::istream &is, Line &line)
-        {
-            return std::getline(is, line);
-        }
-    };
-
-}
-
-std::ifstream open_input_stream(int argc, char *argv[])
-{
-    if (argc < 2)
-    {
-        throw std::runtime_error("No input file provided");
-    }
-    return std::ifstream(argv[1]);
-}
+#include "util.hpp"
 
 char find_first_digit(std::string const &line)
 {
@@ -59,7 +40,7 @@ try
     typedef std::istream_iterator<util::Line> LineIt;
 
     // Read input file
-    std::ifstream in(open_input_stream(argc, argv));
+    std::ifstream in(util::open_input_stream(argc, argv));
     std::vector<std::string> lines((LineIt(in)), LineIt());
 
     std::vector<unsigned> values;

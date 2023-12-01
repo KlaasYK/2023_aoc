@@ -8,7 +8,7 @@ project(1)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-set(SOURCE_DIR src)
+set(SOURCE_DIR ${PROJECT_SOURCE_DIR}/src)
 
 set(SOURCES1
     ${SOURCE_DIR}/first.cpp
@@ -19,4 +19,7 @@ set(SOURCES2
 )
 
 add_executable(aoc_${PROJECT_NAME}.1 ${SOURCES1})
+target_link_libraries(aoc_${PROJECT_NAME}.1 Util)
+
 add_executable(aoc_${PROJECT_NAME}.2 ${SOURCES2})
+target_link_libraries(aoc_${PROJECT_NAME}.2 Util)
