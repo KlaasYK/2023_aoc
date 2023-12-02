@@ -8,3 +8,4 @@ project(AOC_23)
 add_subdirectory(lib)
 
 add_subdirectory(1)
+add_subdirectory(2)
