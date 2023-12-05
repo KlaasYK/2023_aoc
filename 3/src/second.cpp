@@ -11,109 +11,82 @@
 #include <iterator>
 #include <numeric>
 #include <regex>
+#include <set>
 
 #include "util.hpp"
-
-enum State
-{
-    START,
-    PARSING_LEFT,
-    PARSED_LEFT,
-    PARSED_GEAR,
-    PARSING_RIGHT
-};
+#include "common.hpp"
 
 int main(int argc, char *argv[])
 try
 {
+    std::vector<char> schematic;
+    std::vector<std::vector<unsigned>> gears;
+
+    int width = 0;
+    int height = 0;
+
     // Read input file
     std::ifstream in(util::open_input_stream(argc, argv));
 
-    unsigned sum = 0;
-
-    unsigned left = 0;
-    unsigned right = 0;
-
-    State s = START;
-
-    // TODO: check that the number is a part no!
-
+    // Read into 2D array and find width and height
     char c;
+    unsigned cur_x = 0;
     while (in.read(&c, 1))
     {
-        // Ignore line ends
-        if (c == '\n')
-            continue;
-
-        switch (s)
+        switch (c)
         {
-        case START:
-            if (std::isdigit(c))
-            {
-                left = c - '0';
-                s = PARSING_LEFT;
-            }
+        case '\n':
+            width = cur_x;
+            cur_x = 0;
+            ++height;
             break;
-
-        case PARSING_LEFT:
-            if (std::isdigit(c))
-                left = left * 10 + c - '0';
-            else if (c == '*')
-                s = PARSED_GEAR;
-            else if (c == '.')
-                s = PARSED_LEFT;
-            else
-                s = START;
-            break;
-
-        case PARSED_LEFT:
-            if (std::isdigit(c))
-            {
-                left = c - '0';
-                s = PARSING_LEFT;
-            }
-            else if (c == '*')
-                s = PARSED_GEAR;
-            else if (c != '.')
-                s = START;
-            break;
-
-        case PARSED_GEAR:
-            if (std::isdigit(c))
-            {
-                right = c - '0';
-                s = PARSING_RIGHT;
-            }
-            else if (c != '.')
-                s = START;
-            break;
-
-        case PARSING_RIGHT:
-            if (std::isdigit(c))
-                right = right * 10 + c - '0';
-            else if (c == '*')
-            {
-                sum += left * right;
-                left = right;
-                s = PARSED_GEAR;
-            }
-            else if (c == '.')
-            {
-                sum += left * right;
-                left = right;
-                s = PARSED_LEFT;
-            }
-            else
-            {
-                sum += left * right;
-                s = START;
-            }
+        default:
+            ++cur_x;
+            schematic.push_back(c);
         }
-        std::cout << c << ": " << s << "\tsum:" << sum << '\n';
     }
 
-    if (s == PARSING_RIGHT)
-        sum += left * right;
+    std::cout << width << ' ' << height << '\n';
+    for (int i = 0; i != width * height; ++i)
+        gears.push_back(std::vector<unsigned>());
+
+    unsigned cur_value = 0;
+    std::set<unsigned> t_gear;
+    // Walk through array, reading each cell
+    // taking a running count of characters
+    // for each digit, check if a symbol is adjacent
+    // if so, add it when the number ends (i.e. a '.' is found)
+    for (int i = 0; i != schematic.size(); ++i)
+        if (std::isdigit(schematic[i]))
+        {
+            cur_value = cur_value * 10 + schematic[i] - '0';
+            int idx = is_gear_adjacent(i, schematic, width, height);
+            if (idx != -1)
+                t_gear.insert(idx);
+        }
+        else
+        {
+            if (!t_gear.empty())
+                for (auto it = t_gear.begin(); it != t_gear.end(); ++it)
+                    gears[*it].push_back(cur_value);
+
+            cur_value = 0;
+            t_gear.clear();
+        }
+
+    // Check if we ended on a valid number
+
+    if (!t_gear.empty())
+        for (auto it = t_gear.begin(); it != t_gear.end(); ++it)
+            gears[*it].push_back(cur_value);
+
+    //
+    unsigned sum = 0;
+    for (auto it = gears.begin(); it != gears.end(); ++it)
+    {
+        if (it->size() == 2)
+            sum += (*it)[0] * (*it)[1];
+    }
 
     std::cout << "sum: " << sum << '\n';
 }
