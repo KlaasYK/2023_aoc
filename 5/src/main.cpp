@@ -12,6 +12,7 @@
 #include <numeric>
 #include <regex>
 #include <set>
+#include <queue>
 
 #include "util.hpp"
 
@@ -31,9 +32,15 @@ enum MAPPING_TYPE
 
 struct Mapping
 {
-    unsigned dst;
-    unsigned src;
-    unsigned range;
+    unsigned d;
+    unsigned s;
+    unsigned r;
+};
+
+struct Range
+{
+    unsigned s;
+    unsigned r;
 };
 
 std::vector<unsigned> parse_numbers(std::string const &line)
@@ -50,10 +57,58 @@ std::vector<unsigned> parse_numbers(std::string const &line)
 unsigned map(unsigned in, std::vector<Mapping> const &mapping)
 {
     for (unsigned m = 0; m != mapping.size(); ++m)
-        if (in >= mapping[m].src && in < mapping[m].src + mapping[m].range)
-            return mapping[m].dst + in - mapping[m].src;
+        if (in >= mapping[m].s && in < mapping[m].s + mapping[m].r)
+            return mapping[m].d + in - mapping[m].s;
 
     return in;
+}
+
+/**
+ * Maps a range in using m, with the result in mr and unmapped ranges as return value
+ */
+std::vector<Range> map_range(Range &mr, Range const &in, Mapping const &m)
+{
+    // in not in m
+    if (in.s > m.s + mr.r || in.s + in.r < m.s)
+    {
+        mr.r = 0; // nothing mapped
+        return std::vector<Range>({in});
+    }
+
+    // in completely in m
+    if (in.s >= m.s && in.s + in.r <= m.s + m.r)
+    {
+        mr.r = in.r;
+        mr.s = m.d + in.s - m.s;
+
+        // nothing left to map
+        return std::vector<Range>();
+    }
+
+    // in split by m
+    if (m.s > in.s && in.s + in.r > m.s + m.r)
+    {
+        mr = {m.d, m.r};
+        return std::vector<Range>({{in.s, m.s - in.s}, {m.s + m.r, in.s + in.r - m.s + m.r}});
+    }
+
+    // m < in
+    if (m.s <= in.s && m.s + m.r > in.s && m.s + m.r < in.s + in.r)
+    {
+        mr = {m.d + in.s - m.s, m.s + m.r - in.s};
+        return std::vector<Range>({{m.s + m.r, in.s + in.r - (m.s + m.r)}});
+    }
+
+    // m > in
+    if (m.s > in.s && m.s + m.r > in.s + in.r && m.s < in.s + in.r)
+    {
+        mr = {m.d, in.s + in.r - m.s};
+        return std::vector<Range>({{in.s, m.s - in.s}});
+    }
+
+    std::cout << "Missing something...\n";
+    mr.r = 0;
+    return std::vector<Range>();
 }
 
 int main(int argc, char *argv[])
@@ -78,12 +133,34 @@ try
         }
 
     auto seeds = parse_numbers(lines[0]);
+    std::queue<Range> seed_ranges;
+    for (unsigned i = 0; i < seeds.size(); i += 2)
+        seed_ranges.push({seeds[i], seeds[i + 1]});
 
+    // Part 1
     for (unsigned m = 0; m != MAPPING_TYPE_COUNT; ++m)
         for (unsigned s = 0; s != seeds.size(); ++s)
             seeds[s] = map(seeds[s], mappings[m]);
 
     std::cout << "min: " << *std::min_element(seeds.begin(), seeds.end()) << '\n';
+
+    // Part 2
+    for (unsigned m = 0; m != MAPPING_TYPE_COUNT; ++m)
+    {
+        auto mapping_list = mappings[m];
+        std::vector<Range> mapped;
+        for (unsigned n = 0; n != mapping_list.size(); ++n)
+        {
+            Range mapped_range{0, 0};
+            auto mapping = mapping_list[n];
+            // for (unsigned s = 0; s!= seeds.size(); ++ s)
+            // {
+
+            //     seed_ranges.pop();
+            //     auto left = map_range(mapped_range, )
+            // }
+        }
+    }
 }
 catch (std::exception const &ex)
 {
