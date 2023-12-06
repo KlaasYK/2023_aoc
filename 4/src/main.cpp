@@ -38,10 +38,7 @@ unsigned parse_line(std::string const &line)
         auto const numbers = parse_numbers(m[3]);
         std::vector<unsigned> common;
         std::set_intersection(winning.begin(), winning.end(), numbers.begin(), numbers.end(), std::back_inserter(common));
-        std::cout << m[1] << ' ' << common.size() << '\n';
-        return common.size() > 0 ? 1 << (common.size() - 1) : 0;
-    } else {
-        std::cout << line << '\n';
+        return common.size();
     }
 
     return 0;
@@ -56,16 +53,27 @@ try
     std::ifstream in(util::open_input_stream(argc, argv));
     std::vector<std::string> lines((LineIt(in)), LineIt());
 
-    std::vector<unsigned> cards;
+    std::vector<unsigned> winning;
     std::transform(lines.begin(), lines.end(),
-                   std::back_inserter(cards),
+                   std::back_inserter(winning),
                    parse_line);
+
+    std::vector<unsigned> score(winning.size(), 0);
+    for (unsigned i = 0; i != winning.size(); ++i)
+        score[i] = winning[i] > 0 ? 1 << (winning[i] - 1) : 0;
+
+    unsigned score_total = std::accumulate(score.begin(), score.end(), 0);
+    std::cout << "score: " << score_total << '\n';
+
+    // Part 2
+    std::vector<unsigned> cards(winning.size(), 1);
+    for (unsigned i = 0; i != winning.size(); ++i)
+        for (unsigned j = 0; j != winning[i]; j++)
+            cards[i + j + 1] += cards[i];
 
     unsigned sum = std::accumulate(cards.begin(), cards.end(), 0);
 
-    // 9984 too low
-
-    std::cout << "sum: " << sum << '\n';
+    std::cout << "cards: " << sum << '\n';
 }
 catch (std::exception const &ex)
 {
